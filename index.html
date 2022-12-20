@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Gamedev Canvas Workshop</title>
+    <style>
+      * { padding: 0; margin: 0; }
+      canvas { background: #eee; display: block; margin: 0 auto; }
+    </style>
+</head>
+<body>
+
+<canvas id="myCanvas" width="1200" height="750"></canvas>
+
+<script>
+	var canvas = document.getElementById("myCanvas");
+	var ctx = canvas.getContext("2d");
+	var centerX = canvas.width/2;
+	var centerY = canvas.height/2;
+	let asteroidStart = false;
+	
+	class Planet {
+		constructor(x, y, orbitRadius, speed, angle, radius, color) {
+			this.x = x;
+			this.y = y;
+			this.orbitRadius = orbitRadius;
+			this.speed = speed;
+			this.angle = angle;
+			this.radius = radius;
+			this.color = color;
+		}
+		
+		setX(val){
+			this.x = val;
+		}
+		
+		setY(val){
+			this.y = val;
+		}
+	}
+	
+	class Moon {
+		constructor(parentPlanet, x, y, orbitRadius, speed, angle, radius, color) {
+			this.x = x;
+			this.y = y;
+			this.orbitRadius = orbitRadius;
+			this.speed = speed;
+			this.angle = angle;
+			this.radius = radius;
+			this.color = color;
+			this.parentPlanet = parentPlanet;
+		}
+		
+		setX(val){
+			this.x = val;
+		}
+		
+		setY(val){
+			this.y = val;
+		}
+	}
+	
+	class Asteroid {
+		constructor(x, y, speed, radius, color) {
+			this.x = x;
+			this.y = y;
+			this.speed = speed;
+			this.radius = radius;
+			this.color = color;
+		}
+		move(valX, valY){
+			this.x += valX;
+			this.y += valY;
+		}
+		
+		setX(val){
+			this.x = val;
+		}
+	}
+	
+	class Rock {
+		constructor(x, y, xFactor, yFactor) {
+			this.x = x;
+			this.y = y;
+			this.xFactor = xFactor;
+			this.yFactor = yFactor;
+		}
+		move(){
+			this.x += this.xFactor;
+			this.y += this.yFactor;
+		}
+	}
+	
+	let mercury = new Planet(0, 0, 60, 0.018, 0, 3, "#D3D3D3");
+	let venus = new Planet(0, 0, 80, 0.015, 0, 9, "#cb4154");
+	let earth = new Planet(0, 0, 100, 0.01, 0, 10, "#0095DD");
+	let mars = new Planet(0, 0, 140, 0.005, 0, 5,"#9C2E35");
+	let jupiter = new Planet(0, 0, 190, 0.004, 0, 20, "#d1bc8a");
+	let saturn = new Planet(0, 0, 230, 0.0035, 0, 17, "#cc9966");
+	let uranus = new Planet(0, 0, 300, 0.003, 0, 14, "#0CBAA6");
+	let neptune = new Planet(0, 0, 350, 0.0025, 0, 9, "#0000FF");
+	let planets=[];
+	planets.push(mercury);
+	planets.push(earth);
+	planets.push(mars);
+	planets.push(venus);
+	planets.push(jupiter);
+	planets.push(saturn);
+	planets.push(uranus);
+	planets.push(neptune);
+	
+	let earthMoon = new Moon(earth, 0, 0, 20, 0.01, 0, 2, "#A9A9A9");
+	let saturnMoon1 = new Moon(saturn, 0, 0, 24, 0.01, 0, 2, "#A9A9A9");
+	let saturnMoon2 = new Moon(saturn, 0, 0, 25, 0.008, 0, 4, "#9C2E35");
+	let saturnMoon3 = new Moon(saturn, 0, 0, 26, 0.012, 0, 3, "#0000FF");
+	let moons=[];
+	moons.push(earthMoon);
+	moons.push(saturnMoon1);
+	moons.push(saturnMoon2);
+	moons.push(saturnMoon3);
+	
+	let debris=[];
+	
+
+	let asteroid = new Asteroid(10, centerY, 1, 9, "#964B00");
+	
+	document.getElementById("myCanvas").addEventListener("click", function(){
+		if (!asteroidStart){
+			asteroidStart=true;
+		} else {
+			asteroidStart=false;
+			asteroid.setX(10);
+		}
+		
+	});
+	
+	function drawPlanet(planet) {
+		planet.setX(centerX + Math.cos(planet.angle) * planet.orbitRadius);
+		planet.setY(centerY + Math.sin(planet.angle) * planet.orbitRadius);
+		ctx.beginPath();
+		ctx.arc(planet.x, planet.y, planet.radius, 0, Math.PI*2);
+		ctx.fillStyle = planet.color;
+		ctx.fill();
+		ctx.closePath();
+		planet.angle+=planet.speed;
+	}
+	
+	function drawMoon(moon) {
+		moon.setX(moon.parentPlanet.x + Math.cos(moon.angle) * moon.orbitRadius);
+		moon.setY(moon.parentPlanet.y + Math.sin(moon.angle) * moon.orbitRadius);
+		ctx.beginPath();
+		ctx.arc(moon.x, moon.y, moon.radius, 0, Math.PI*2);
+		ctx.fillStyle = moon.color;
+		ctx.fill();
+		ctx.closePath();
+		moon.angle-=moon.speed;
+	}
+	
+	function drawSun() {
+		ctx.beginPath();
+		ctx.arc(centerX, centerY, 50, 0, Math.PI*2);
+		ctx.fillStyle = "#fce570";
+		ctx.fill();
+		ctx.closePath();
+	}
+	
+	function drawAsteroid(){
+		ctx.beginPath();
+		ctx.arc(asteroid.x, asteroid.y, asteroid.radius, 0, Math.PI*2);
+		ctx.fillStyle = asteroid.color;
+		ctx.fill();
+		ctx.closePath();
+		if (asteroidStart){	
+			asteroid.move(asteroid.speed, 0);
+		}
+	}
+	
+	function draw() {
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		drawSun();
+		drawAsteroid();
+		planets.forEach(function (arrayItem) {
+			drawPlanet(arrayItem);
+		});
+		moons.forEach(function (arrayItem) {
+			drawMoon(arrayItem);
+		});
+		drawExplosion()
+		planets = isCollide(planets);
+		moons = isCollide(moons);
+	}
+	setInterval(draw, 10);
+	
+	function createDebris(destroyedObject){
+		for (let i = 0; i < 30; i++) {
+		    let randomX = Math.floor((Math.random() * 20) + 1) -10;
+			let randomY = Math.floor((Math.random() * 20) + 1) -10;
+			debris.push(new Rock(destroyedObject.x, destroyedObject.y, randomX, randomY));
+		}
+	}
+	
+	function drawExplosion() {
+		debris.forEach(function (arrayItem) {
+			ctx.beginPath();
+			ctx.arc(arrayItem.x, arrayItem.y, 5, 0, Math.PI*2);
+			ctx.fillStyle = "#FFA500";
+			ctx.fill();
+			ctx.closePath();
+			arrayItem.move();
+		});
+	}
+	
+	function isCollide(victimArray){
+		
+		let destroyed=victimArray;
+		victimArray.forEach(function (arrayItem) {
+			if(((asteroid.x-asteroid.radius > arrayItem.x-arrayItem.radius 
+			&& asteroid.x-asteroid.radius < arrayItem.x+arrayItem.radius) 
+			|| (asteroid.x+asteroid.radius > arrayItem.x-arrayItem.radius 
+			&& asteroid.x+asteroid.radius < arrayItem.x+arrayItem.radius))
+			&& ((asteroid.y-asteroid.radius > arrayItem.y-arrayItem.radius 
+			&& asteroid.y-asteroid.radius < arrayItem.y+arrayItem.radius) 
+			|| (asteroid.y+asteroid.radius > arrayItem.y-arrayItem.radius 
+			&& asteroid.y+asteroid.radius < arrayItem.y+arrayItem.radius))){
+				console.log("COLLIDE");
+				destroyed = arrayRemove(destroyed, arrayItem);
+				asteroid.setX(0);
+				createDebris(arrayItem);
+			} else if (asteroid.x > canvas.width){
+				asteroid.setX(0);
+			}
+		});
+		return destroyed;
+	}
+	
+	function arrayRemove(arr, value) { 
+    
+        return arr.filter(function(ele){ 
+            return ele != value; 
+        });
+    }
+	
+</script>
+
+</body>
+</html>
